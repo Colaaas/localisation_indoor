@@ -1,282 +1,52 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Triangulation de point</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-      padding: 20px;
-      background-color: #f0f0f0;
-    }
-
-    #plans {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .plan-container {
-      position: relative;
-      width: 527px;
-      height: 688px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      border: 1px solid #ccc;
-      cursor: crosshair;
-    }
-
-    .point {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: blue;
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-      text-align: center;
-      line-height: 20px;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      cursor: grab;
-      user-select: none;
-    }
-
-    .point.inconnu {
-      background-color: red;
-    }
-
-    #coordonnees {
-      width: 270px;
-      padding: 10px;
-      background-color: white;
-      border: 1px solid #ccc;
-      overflow-y: auto;
-    }
-
-    .coordonnees-ligne {
-      margin-bottom: 10px;
-    }
-
-    .coordonnees-ligne input {
-      width: 60px;
-      margin-left: 5px;
-    }
-
-    .coordonnees-ligne button {
-      margin-left: 5px;
-    }
-
-    .coordonnees-ligne label {
-      display: inline-block;
-      width: 70px;
-    }
-
-    #triangulation {
-      margin-top: 20px;
-    }
-
-    #triangulation input {
-      width: 50px;
-      margin: 3px;
-    }
-
-    #triangulation button {
-      margin-top: 10px;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Localisation sur plans</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="container">
+    <div class="plan-section">
+      <h3>Plan 1</h3>
+      <div id="plan1" class="plan">
+        <img src="plan1.jpg" alt="Plan 1" />
+      </div>
+    </div>
 
-  <div id="plans">
-    <div class="plan-container" id="plan1" style="background-image: url('plan1.jpg');"></div>
-    <div class="plan-container" id="plan2" style="background-image: url('plan2.jpg');"></div>
-  </div>
+    <div class="plan-section">
+      <h3>Plan 2</h3>
+      <div id="plan2" class="plan">
+        <img src="plan2.jpg" alt="Plan 2" />
+      </div>
+    </div>
 
-  <div id="coordonnees">
-    <h3>Points</h3>
-    <div id="liste-coordonnees"></div>
+    <div id="coordonnees">
+      <h4>Points du plan 1</h4>
+      <div id="plan1-points"></div>
 
-    <div id="triangulation">
-      <h4>Localiser un point par distances</h4>
-      <form id="triangulation-form"></form>
-      <button id="btn-localiser">Localiser point inconnu</button>
+      <h4>Localiser un point (plan 1)</h4>
+      <form id="localiser-form-plan1">
+        <label>Distances aux points connus :</label>
+        <div id="distances-inputs-plan1"></div>
+        <button type="submit">Localiser</button>
+      </form>
+
+      <hr />
+
+      <h4>Points du plan 2</h4>
+      <div id="plan2-points"></div>
+
+      <h4>Localiser un point (plan 2)</h4>
+      <form id="localiser-form-plan2">
+        <label>Distances aux points connus :</label>
+        <div id="distances-inputs-plan2"></div>
+        <button type="submit">Localiser</button>
+      </form>
     </div>
   </div>
 
-  <script>
-    const containers = [document.getElementById('plan1'), document.getElementById('plan2')];
-    const listeCoordonnees = document.getElementById('liste-coordonnees');
-    const triangulationForm = document.getElementById('triangulation-form');
-    const btnLocaliser = document.getElementById('btn-localiser');
-
-    let points = [];
-    let compteur = 1;
-    let selectedPoint = null;
-    let pointInconnu = null;
-
-    containers.forEach((container, index) => {
-      container.addEventListener('click', (e) => {
-        if (e.target === container) {
-          const rect = container.getBoundingClientRect();
-          const x = Math.round(e.clientX - rect.left);
-          const y = Math.round(e.clientY - rect.top);
-
-          ajouterPoint(container, index + 1, x, y);
-        }
-      });
-    });
-
-    function ajouterPoint(container, planId, x, y) {
-      const point = document.createElement('div');
-      point.className = 'point';
-      point.textContent = compteur;
-      point.dataset.id = compteur;
-
-      point.style.left = `${x}px`;
-      point.style.top = `${y}px`;
-
-      point.addEventListener('mousedown', () => selectedPoint = point);
-      point.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        supprimerPoint(Number(point.dataset.id));
-      });
-
-      container.appendChild(point);
-      points.push({ id: compteur, x, y, planId, point });
-      compteur++;
-      afficherCoordonnees();
-    }
-
-function afficherCoordonnees() {
-  listeCoordonnees.innerHTML = `
-    <h4>Points du plan 1</h4>
-    <div id="plan1-points"></div>
-    <h4>Points du plan 2</h4>
-    <div id="plan2-points"></div>
-  `;
-
-  const container1 = document.getElementById("plan1-points");
-  const container2 = document.getElementById("plan2-points");
-
-  points.forEach(({ id, x, y, planId }) => {
-    const ligne = document.createElement('div');
-    ligne.className = 'coordonnees-ligne';
-
-    ligne.innerHTML = `
-      <label>Point ${id} (P${planId})</label>
-      X <input type="number" value="${x}" data-id="${id}" data-coord="x">
-      Y <input type="number" value="${y}" data-id="${id}" data-coord="y">
-      <button data-id="${id}">❌</button>
-    `;
-
-    (planId === 1 ? container1 : container2).appendChild(ligne);
-  });
-
-  // inputs
-  listeCoordonnees.querySelectorAll("input").forEach(input => {
-    input.addEventListener('change', () => {
-      const id = Number(input.dataset.id);
-      const coord = input.dataset.coord;
-      const val = Number(input.value);
-
-      const obj = points.find(p => p.id === id);
-      if (obj) {
-        obj[coord] = val;
-        obj.point.style[coord === 'x' ? 'left' : 'top'] = `${val}px`;
-      }
-    });
-  });
-
-  // boutons de suppression
-  listeCoordonnees.querySelectorAll("button").forEach(btn => {
-    btn.addEventListener('click', () => supprimerPoint(Number(btn.dataset.id)));
-  });
-
-  updateTriangulationForm();
-}
-
-
-    function supprimerPoint(id) {
-      const index = points.findIndex(p => p.id === id);
-      if (index !== -1) {
-        const { point } = points[index];
-        point.parentElement.removeChild(point);
-        points.splice(index, 1);
-        afficherCoordonnees();
-      }
-    }
-
-    document.addEventListener('mousemove', (e) => {
-      if (selectedPoint) {
-        const obj = points.find(p => p.point === selectedPoint);
-        if (!obj) return;
-        const container = containers[obj.planId - 1];
-        const rect = container.getBoundingClientRect();
-        const x = Math.round(e.clientX - rect.left);
-        const y = Math.round(e.clientY - rect.top);
-        selectedPoint.style.left = `${x}px`;
-        selectedPoint.style.top = `${y}px`;
-        obj.x = x;
-        obj.y = y;
-        afficherCoordonnees();
-      }
-    });
-
-    document.addEventListener('mouseup', () => selectedPoint = null);
-
-    function updateTriangulationForm() {
-      triangulationForm.innerHTML = "";
-      points.forEach(p => {
-        triangulationForm.innerHTML += `Distance à P${p.id} <input type="number" data-id="${p.id}" placeholder="px"><br>`;
-      });
-    }
-
-    btnLocaliser.addEventListener('click', () => {
-      const distances = [];
-      triangulationForm.querySelectorAll("input").forEach(input => {
-        const d = Number(input.value);
-        if (d > 0) {
-          const id = Number(input.dataset.id);
-          const p = points.find(p => p.id === id);
-          if (p) distances.push({ x: p.x, y: p.y, r: d });
-        }
-      });
-
-      if (distances.length >= 2) {
-        const { x, y } = estimerIntersection(distances);
-        if (!pointInconnu) {
-          const p = document.createElement('div');
-          p.className = 'point inconnu';
-          p.textContent = '?';
-          containers[0].appendChild(p);
-          pointInconnu = p;
-        }
-
-        pointInconnu.style.left = `${x}px`;
-        pointInconnu.style.top = `${y}px`;
-      } else {
-        alert("Entrer au moins 2 distances valides.");
-      }
-    });
-
-    // moyenne pondérée simple
-    function estimerIntersection(distances) {
-      let x = 0, y = 0;
-      distances.forEach(d => {
-        x += d.x;
-        y += d.y;
-      });
-      return {
-        x: Math.round(x / distances.length),
-        y: Math.round(y / distances.length)
-      };
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
