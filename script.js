@@ -14,14 +14,13 @@ function init() {
     });
   });
 
-  document.getElementById("localiser-form-plan1").addEventListener("submit", e => {
-    e.preventDefault();
-    localiserPoint("plan1", "distances-inputs-plan1");
-  });
-
-  document.getElementById("localiser-form-plan2").addEventListener("submit", e => {
-    e.preventDefault();
-    localiserPoint("plan2", "distances-inputs-plan2");
+  // Ajout de l'écouteur pour mettre à jour automatiquement la localisation
+  ["distances-inputs-plan1", "distances-inputs-plan2"].forEach(inputDivId => {
+    const inputDiv = document.getElementById(inputDivId);
+    inputDiv.addEventListener("input", () => {
+      const planId = inputDivId.includes("plan1") ? "plan1" : "plan2";
+      localiserPoint(planId, inputDivId);
+    });
   });
 }
 
@@ -153,6 +152,14 @@ function localiserPoint(planId, inputDivId) {
   }
 
   const pos = estimerPosition(knownPoints, distances);
+  
+  // Chercher si un point rouge existe déjà sur le plan
+  const existingRedPoint = document.querySelector(`#${planId} .point.red`);
+  if (existingRedPoint) {
+    existingRedPoint.remove(); // Supprimer l'ancien point rouge
+  }
+
+  // Créer un nouveau point rouge
   const plan = document.getElementById(planId);
   const point = document.createElement("div");
   point.classList.add("point", "red");
