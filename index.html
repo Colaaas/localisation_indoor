@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Plans interactifs</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    #plans {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .plan-container {
+      position: relative;
+      width: 527px;
+      height: 688px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      border: 1px solid #ccc;
+      cursor: crosshair;
+    }
+
+    .point {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 20px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: grab;
+      user-select: none;
+    }
+
+    #coordonnees {
+      max-height: 1400px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      width: 270px;
+    }
+
+    .coordonnees-ligne {
+      margin-bottom: 10px;
+    }
+
+    .coordonnees-ligne input {
+      width: 60px;
+      margin-left: 5px;
+    }
+
+    .coordonnees-ligne button {
+      margin-left: 5px;
+    }
+
+    .coordonnees-ligne label {
+      display: inline-block;
+      width: 70px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="plans">
+    <div class="plan-container" id="plan1" style="background-image: url('plan1.jpg');"></div>
+    <div class="plan-container" id="plan2" style="background-image: url('plan2.jpg');"></div>
+  </div>
+
+  <div id="coordonnees">
+    <h3>Points</h3>
+    <div id="liste-coordonnees"></div>
+  </div>
+
+  <script>
+    const containers = [document.getElementById('plan1'), document.getElementById('plan2')];
+    const listeCoordonnees = document.getElementById('liste-coordonnees');
+    let points = [];
+    let compteur = 1;
+    let selectedPoint = null;
+
+    // Ajout de point sur clic
+    containers.forEach((container, index) => {
+      container.addEventListener('click', (e) => {
+        if (e.target === container) {
+          const rect = container.getBoundingClientRect();
+          const x = Math.round(e.clientX - rect.left);
+          const y = Math.round(e.clientY - rect.top);
+
+          ajouterPoint(container, index + 1, x, y);
+        }
+      });
+    });
+
+    function ajouterPoint(container, planId, x, y) {
+      const point = document.createElement('div');
+      point.className = 'point';
+      point.textContent = compteur;
+      point.dataset.id = compteur;
+
+      point.style.left = `${x}px`;
+      point.style.top = `${y}px`;
+
+      point.addEventListener('mousedown', () => {
+        selectedPoint = point;
+      });
+
+      point.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        supprimerPoint(Number(point.dataset.id));
+      });
+
+      container.appendChild(point);
+
+      points.push({ id: compteur, x, y, planId, point });
+      compteur++;
+      afficherCoordonnees();
+    }
+
+    function afficherCoordonnees() {
+      listeCoordonnees.innerHTML = "";
+
+      points.forEach(({ id, x, y, planId }) => {
+        const ligne = document.createElement('div');
+        ligne.className = 'coordonnees-ligne';
+
+        ligne.innerHTML = `
+          <label>Point ${id} (P${planId})</label>
+          X <input type="number" value="${x}" data-id="${id}" data-coord="x">
+          Y <input type="number" value="${y}" data-id="${id}" data-coord="y">
+          <button data-id="${id}">❌</button>
+        `;
+
+        listeCoordonnees.appendChild(ligne);
+      });
+
+      // Modification des coordonnées
+      listeCoordonnees.querySelectorAll("input").forEach(input => {
+        input.addEventListener('change', () => {
+          const id = Number(input.dataset.id);
+          const coord = input.dataset.coord;
+          const val = Number(input.value);
+
+          const obj = points.find(p => p.id === id);
+          if (obj) {
+            obj[coord] = val;
+            obj.point.style[coord === 'x' ? 'left' : 'top'] = `${val}px`;
+          }
+        });
+      });
+
+      // Suppression
+      listeCoordonnees.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener('click', () => {
+          supprimerPoint(Number(btn.dataset.id));
+        });
+      });
+    }
+
+    function supprimerPoint(id) {
+      const index = points.findIndex(p => p.id === id);
+      if (index !== -1) {
+        const { point } = points[index];
+        point.parentElement.removeChild(point);
+        points.splice(index, 1);
+        afficherCoordonnees();
+      }
+    }
+
+    // Déplacement à la souris
+    document.addEventListener('mousemove', (e) => {
+      if (selectedPoint) {
+        const obj = points.find(p => p.point === selectedPoint);
+        if (!obj) return;
+
+        const container = containers[obj.planId - 1];
+        const rect = container.getBoundingClientRect();
+        const x = Math.round(e.clientX - rect.left);
+        const y = Math.round(e.clientY - rect.top);
+
+        selectedPoint.style.left = `${x}px`;
+        selectedPoint.style.top = `${y}px`;
+
+        obj.x = x;
+        obj.y = y;
+        afficherCoordonnees();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      selectedPoint = null;
+    });
+  </script>
+</body>
+</html>
