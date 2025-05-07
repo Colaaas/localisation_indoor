@@ -29,15 +29,15 @@ function ajouterPoint(planId, x, y) {
   const point = document.createElement("div");
   point.classList.add("point");
   point.textContent = idCounter;
-  point.style.left = `${x}px`;
-  point.style.top = `${y}px`;
+  point.style.left = `${x - 8}px`;
+  point.style.top = `${y - 8}px`;
   point.draggable = true;
 
   const id = idCounter++;
   point.dataset.id = id;
   plan.appendChild(point);
 
-  const pointData = { id, x, y, point, planId: planId === "plan1" ? 1 : 2 };
+  const pointData = { id, x: x - 8, y: y - 8, point, planId: planId === "plan1" ? 1 : 2 };
   points.push(pointData);
 
   makeDraggable(point, pointData);
@@ -57,8 +57,8 @@ function makeDraggable(point, pointData) {
     const id = Number(e.dataTransfer.getData("text/plain"));
     const p = points.find(p => p.id === id);
     if (p) {
-      p.x = e.clientX - rect.left;
-      p.y = e.clientY - rect.top;
+      p.x = e.clientX - rect.left - 10;
+      p.y = e.clientY - rect.top - 10;
       p.point.style.left = `${p.x}px`;
       p.point.style.top = `${p.y}px`;
       afficherCoordonnees();
