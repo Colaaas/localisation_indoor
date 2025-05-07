@@ -37,7 +37,7 @@ function ajouterPoint(planId, x, y) {
   point.dataset.id = id;
   plan.appendChild(point);
 
-  const pointData = { id, x: x - 8, y: y - 8, point, planId: planId === "plan1" ? 1 : 2 };
+  const pointData = { id, x: x - 8, y: y - 8, point, planId: planId === "plan1" ? 1 : 2, distance: null };
   points.push(pointData);
 
   makeDraggable(point, pointData);
@@ -112,6 +112,7 @@ function supprimerPoint(id) {
     points[index].point.remove();
     points.splice(index, 1);
     afficherCoordonnees();
+    updateTriangulationForm(); // Met à jour les distances affichées
   }
 }
 
@@ -123,12 +124,11 @@ function updateTriangulationForm() {
       .filter(p => p.planId === (planId === "plan1" ? 1 : 2))
       .forEach(p => {
         const div = document.createElement("div");
-        div.innerHTML = `Point ${p.id} distance : <input type="number" step="1" data-id="${p.id}">`;
+        div.innerHTML = `Point ${p.id} distance : <input type="number" step="1" data-id="${p.id}" value="${p.distance || ''}">`;
         inputDiv.appendChild(div);
       });
   });
 
-  // Ajouter un écouteur pour afficher les cercles
   document.querySelectorAll(`#distances-inputs-plan1 input, #distances-inputs-plan2 input`).forEach(input => {
     input.addEventListener("input", () => {
       const id = Number(input.dataset.id);
@@ -136,6 +136,8 @@ function updateTriangulationForm() {
       const point = points.find(p => p.id === id);
 
       if (point) {
+        point.distance = isNaN(radius) || radius <= 0 ? null : radius;
+
         // Supprimer l'ancien cercle s'il existe
         const existingCircle = point.point.querySelector(".circle");
         if (existingCircle) {
@@ -143,11 +145,11 @@ function updateTriangulationForm() {
         }
 
         // Ajouter un nouveau cercle si la distance est valide
-        if (!isNaN(radius) && radius > 0) {
+        if (point.distance) {
           const circle = document.createElement("div");
           circle.classList.add("circle");
-          circle.style.width = `${radius * 2}px`;
-          circle.style.height = `${radius * 2}px`;
+          circle.style.width = `${point.distance * 2}px`;
+          circle.style.height = `${point.distance * 2}px`;
           circle.style.left = "50%"; // Centrer horizontalement
           circle.style.top = "50%";  // Centrer verticalement
           point.point.appendChild(circle);
@@ -158,23 +160,13 @@ function updateTriangulationForm() {
 }
 
 function localiserPoint(planId, inputDivId) {
-  const inputs = document.querySelectorAll(`#${inputDivId} input`);
   const distances = [];
-  const knownPoints = [];
+  const knownPoints = points.filter(p => p.planId === (planId === "plan1" ? 1 : 2) && p.distance);
 
-  inputs.forEach(input => {
-    const val = Number(input.value);
-    if (!isNaN(val) && val > 0) { // Vérifie que la distance est valide
-      const id = Number(input.dataset.id);
-      const p = points.find(p => p.id === id);
-      if (p) {
-        distances.push(val);
-        knownPoints.push(p);
-      }
-    }
+  knownPoints.forEach(p => {
+    distances.push(p.distance);
   });
 
-  // Supprimer le point rouge s'il existe et qu'il n'y a pas au moins 3 distances connues
   const existingRedPoint = document.querySelector(`#${planId} .point.red`);
   if (distances.length < 3) {
     if (existingRedPoint) {
@@ -186,12 +178,10 @@ function localiserPoint(planId, inputDivId) {
   try {
     const pos = estimerPosition(knownPoints, distances);
 
-    // Supprimer l'ancien point rouge
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
 
-    // Créer un nouveau point rouge
     const plan = document.getElementById(planId);
     const point = document.createElement("div");
     point.classList.add("point", "red");
@@ -200,7 +190,6 @@ function localiserPoint(planId, inputDivId) {
     point.style.top = `${pos.y}px`;
     plan.appendChild(point);
   } catch (error) {
-    // Si une erreur survient, supprimer le point rouge
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
