@@ -127,6 +127,34 @@ function updateTriangulationForm() {
         inputDiv.appendChild(div);
       });
   });
+
+  // Ajouter un écouteur pour afficher les cercles
+  document.querySelectorAll(`#distances-inputs-plan1 input, #distances-inputs-plan2 input`).forEach(input => {
+    input.addEventListener("input", () => {
+      const id = Number(input.dataset.id);
+      const radius = Number(input.value);
+      const point = points.find(p => p.id === id);
+
+      if (point) {
+        // Supprimer l'ancien cercle s'il existe
+        const existingCircle = point.point.querySelector(".circle");
+        if (existingCircle) {
+          existingCircle.remove();
+        }
+
+        // Ajouter un nouveau cercle si la distance est valide
+        if (!isNaN(radius) && radius > 0) {
+          const circle = document.createElement("div");
+          circle.classList.add("circle");
+          circle.style.width = `${radius * 2}px`;
+          circle.style.height = `${radius * 2}px`;
+          circle.style.left = "50%"; // Centrer horizontalement
+          circle.style.top = "50%";  // Centrer verticalement
+          point.point.appendChild(circle);
+        }
+      }
+    });
+  });
 }
 
 function localiserPoint(planId, inputDivId) {
@@ -136,7 +164,7 @@ function localiserPoint(planId, inputDivId) {
 
   inputs.forEach(input => {
     const val = Number(input.value);
-    if (!isNaN(val)) {
+    if (!isNaN(val) && val > 0) { // Vérifie que la distance est valide
       const id = Number(input.dataset.id);
       const p = points.find(p => p.id === id);
       if (p) {
@@ -146,8 +174,12 @@ function localiserPoint(planId, inputDivId) {
     }
   });
 
+  // Supprimer le point rouge s'il existe et qu'il n'y a pas au moins 3 distances connues
+  const existingRedPoint = document.querySelector(`#${planId} .point.red`);
   if (distances.length < 3) {
-    alert("Il faut au moins 3 distances pour localiser un point.");
+    if (existingRedPoint) {
+      existingRedPoint.remove();
+    }
     return;
   }
 
@@ -155,7 +187,6 @@ function localiserPoint(planId, inputDivId) {
     const pos = estimerPosition(knownPoints, distances);
 
     // Supprimer l'ancien point rouge
-    const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
@@ -169,7 +200,10 @@ function localiserPoint(planId, inputDivId) {
     point.style.top = `${pos.y}px`;
     plan.appendChild(point);
   } catch (error) {
-    alert(error.message);
+    // Si une erreur survient, supprimer le point rouge
+    if (existingRedPoint) {
+      existingRedPoint.remove();
+    }
   }
 }
 
