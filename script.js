@@ -49,6 +49,10 @@ function makeDraggable(point, pointData) {
     e.dataTransfer.setData("text/plain", pointData.id);
   });
 
+  point.addEventListener("dragend", () => {
+    // Aucun changement de style n'est nécessaire ici
+  });
+
   const plan = point.closest(".plan");
   plan.addEventListener("dragover", e => e.preventDefault());
   plan.addEventListener("drop", e => {
@@ -57,11 +61,16 @@ function makeDraggable(point, pointData) {
     const id = Number(e.dataTransfer.getData("text/plain"));
     const p = points.find(p => p.id === id);
     if (p) {
+      // Mettre à jour les coordonnées du point
       p.x = e.clientX - rect.left - 10;
       p.y = e.clientY - rect.top - 10;
       p.point.style.left = `${p.x}px`;
       p.point.style.top = `${p.y}px`;
+
+      // Mettre à jour les coordonnées affichées et recalculer la localisation
       afficherCoordonnees();
+      const planId = p.planId === 1 ? "plan1" : "plan2";
+      localiserPoint(planId, `distances-inputs-${planId}`);
     }
   });
 }
@@ -95,6 +104,10 @@ function afficherCoordonnees() {
       if (p) {
         p[coord] = val;
         p.point.style[coord === "x" ? "left" : "top"] = `${val}px`;
+
+        // Mettre à jour la localisation du point rouge
+        const planId = p.planId === 1 ? "plan1" : "plan2";
+        localiserPoint(planId, `distances-inputs-${planId}`);
       }
     });
   });
@@ -160,24 +173,27 @@ function updateTriangulationForm() {
 }
 
 function localiserPoint(planId, inputDivId) {
-  const distances = [];
   const knownPoints = points.filter(p => p.planId === (planId === "plan1" ? 1 : 2) && p.distance);
 
-  knownPoints.forEach(p => {
-    distances.push(p.distance);
-  });
-
-  const existingRedPoint = document.querySelector(`#${planId} .point.red`);
-  if (distances.length < 3) {
+  if (knownPoints.length < 3) {
+    const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
     return;
   }
 
-  try {
-    const pos = estimerPosition(knownPoints, distances);
+  // Trier les points par distance croissante
+  const sortedPoints = knownPoints.sort((a, b) => a.distance - b.distance);
 
+  // Prendre les 3 plus petites distances
+  const selectedPoints = sortedPoints.slice(0, 3);
+  const distances = selectedPoints.map(p => p.distance);
+
+  try {
+    const pos = estimerPosition(selectedPoints, distances);
+
+    const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
@@ -190,6 +206,7 @@ function localiserPoint(planId, inputDivId) {
     point.style.top = `${pos.y}px`;
     plan.appendChild(point);
   } catch (error) {
+    const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }

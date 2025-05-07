@@ -77,5 +77,5 @@ body {
   
   .coordonnees-ligne input {
     display: inline-block;
-    width: 70px; /* Ajustez la largeur selon vos besoins */
+    width: 50px; /* Ajustez la largeur selon vos besoins */
   }
