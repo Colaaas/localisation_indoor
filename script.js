@@ -77,9 +77,9 @@ function afficherCoordonnees() {
     ligne.className = "coordonnees-ligne";
 
     ligne.innerHTML = `
-      <label>Point ${id} (P${planId})</label>
-      X <input type="number" value="${Math.round(x)}" data-id="${id}" data-coord="x">
-      Y <input type="number" value="${Math.round(y)}" data-id="${id}" data-coord="y">
+      <label>Point ${id}</label><br>
+      <label>X <input type="number" value="${Math.round(x)}" data-id="${id}" data-coord="x"></label><br>
+      <label>Y <input type="number" value="${Math.round(y)}" data-id="${id}" data-coord="y"></label><br>
       <button data-id="${id}">❌</button>
     `;
 
@@ -151,32 +151,55 @@ function localiserPoint(planId, inputDivId) {
     return;
   }
 
-  const pos = estimerPosition(knownPoints, distances);
-  
-  // Chercher si un point rouge existe déjà sur le plan
-  const existingRedPoint = document.querySelector(`#${planId} .point.red`);
-  if (existingRedPoint) {
-    existingRedPoint.remove(); // Supprimer l'ancien point rouge
-  }
+  try {
+    const pos = estimerPosition(knownPoints, distances);
 
-  // Créer un nouveau point rouge
-  const plan = document.getElementById(planId);
-  const point = document.createElement("div");
-  point.classList.add("point", "red");
-  point.textContent = "X";
-  point.style.left = `${pos.x}px`;
-  point.style.top = `${pos.y}px`;
-  plan.appendChild(point);
+    // Supprimer l'ancien point rouge
+    const existingRedPoint = document.querySelector(`#${planId} .point.red`);
+    if (existingRedPoint) {
+      existingRedPoint.remove();
+    }
+
+    // Créer un nouveau point rouge
+    const plan = document.getElementById(planId);
+    const point = document.createElement("div");
+    point.classList.add("point", "red");
+    point.textContent = "X";
+    point.style.left = `${pos.x}px`;
+    point.style.top = `${pos.y}px`;
+    plan.appendChild(point);
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 function estimerPosition(knownPoints, distances) {
-  let x = 0, y = 0;
-  knownPoints.forEach((p, i) => {
-    const angle = (2 * Math.PI * i) / knownPoints.length;
-    x += p.x + distances[i] * Math.cos(angle);
-    y += p.y + distances[i] * Math.sin(angle);
-  });
-  return { x: x / knownPoints.length, y: y / knownPoints.length };
+  if (knownPoints.length < 3) {
+    throw new Error("Au moins 3 points sont nécessaires pour la triangulation.");
+  }
+
+  // Utiliser les trois premiers points pour la triangulation
+  const [p1, p2, p3] = knownPoints;
+  const [d1, d2, d3] = distances;
+
+  // Résolution des équations de cercle
+  const A = 2 * (p2.x - p1.x);
+  const B = 2 * (p2.y - p1.y);
+  const C = d1 ** 2 - d2 ** 2 - p1.x ** 2 + p2.x ** 2 - p1.y ** 2 + p2.y ** 2;
+
+  const D = 2 * (p3.x - p1.x);
+  const E = 2 * (p3.y - p1.y);
+  const F = d1 ** 2 - d3 ** 2 - p1.x ** 2 + p3.x ** 2 - p1.y ** 2 + p3.y ** 2;
+
+  const denominator = A * E - B * D;
+  if (denominator === 0) {
+    throw new Error("Les points sont colinéaires ou mal positionnés.");
+  }
+
+  const x = (C * E - B * F) / denominator;
+  const y = (A * F - C * D) / denominator;
+
+  return { x, y };
 }
 
 window.addEventListener("DOMContentLoaded", init);
