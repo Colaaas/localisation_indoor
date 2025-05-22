@@ -3,56 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Localisation sur plans</title>
+  <title>Localisation sur plan</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="container">
-    <div class="plan-section">
-      <h3>Plan 1</h3>
-      <div id="plan1" class="plan">
-        <img src="plan1.jpg" alt="Plan 1" />
+    <div class="main-content">
+      <div id="plan-loader">
+        <input type="file" id="plan-upload" accept="image/*">
+        <span id="plan-filename"></span>
       </div>
+      <div id="plans-container"></div>
     </div>
-
-    <div class="plan-section">
-      <h3>Plan 2</h3>
-      <div id="plan2" class="plan">
-        <img src="plan2.jpg" alt="Plan 2" />
-      </div>
-    </div>
-
     <div id="coordonnees">
-      <h4>Points du plan 1</h4>
-      <div id="plan1-container">
-        <button id="clear-plan1">Retirer tous les points du Plan 1</button>
-        <div id="plan1" class="plan"></div>
-      </div>
       <div id="plan1-points"></div>
-
-      <h4>Localiser un point (plan 1)</h4>
-      <form id="localiser-form-plan1">
-        <label>Distances aux points connus :</label>
-        <div id="distances-inputs-plan1"></div>
-      </form>
-
-      <hr />
-
-      <h4>Points du plan 2</h4>
-      <div id="plan2-container">
-        <button id="clear-plan2">Retirer tous les points du Plan 2</button>
-        <div id="plan2" class="plan"></div>
-      </div>
-      <div id="plan2-points"></div>
-
-      <h4>Localiser un point (plan 2)</h4>
-      <form id="localiser-form-plan2">
-        <label>Distances aux points connus :</label>
-        <div id="distances-inputs-plan2"></div>
-      </form>
+      <div id="distances-inputs-plan1"></div>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>

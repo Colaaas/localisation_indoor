@@ -2,25 +2,49 @@ let idCounter = 1;
 const points = [];
 
 function init() {
-  ["plan1", "plan2"].forEach(planId => {
-    const plan = document.getElementById(planId);
-    plan.addEventListener("click", e => {
-      if (e.target.tagName === "IMG") {
-        const rect = plan.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        ajouterPoint(planId, x, y);
-      }
-    });
+  document.getElementById("plan-upload").addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    document.getElementById("plan-filename").textContent = file ? file.name : "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (evt) {
+      const plansContainer = document.getElementById("plans-container");
+      plansContainer.innerHTML = "";
+
+      const planDiv = document.createElement("div");
+      planDiv.className = "plan";
+      planDiv.id = "plan1";
+
+      const img = document.createElement("img");
+      img.src = evt.target.result;
+      img.style.width = "100%";
+      img.style.height = "auto";
+      planDiv.appendChild(img);
+
+      plansContainer.appendChild(planDiv);
+
+      initPlan("plan1");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function initPlan(planId) {
+  const plan = document.getElementById(planId);
+  plan.addEventListener("click", e => {
+    if (e.target.tagName === "IMG") {
+      const rect = plan.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      ajouterPoint(planId, x, y);
+    }
   });
 
-  // Ajout de l'écouteur pour mettre à jour automatiquement la localisation
-  ["distances-inputs-plan1", "distances-inputs-plan2"].forEach(inputDivId => {
-    const inputDiv = document.getElementById(inputDivId);
-    inputDiv.addEventListener("input", () => {
-      const planId = inputDivId.includes("plan1") ? "plan1" : "plan2";
-      localiserPoint(planId, inputDivId);
-    });
+  // Ajoute l'écouteur pour les distances
+  const inputDiv = document.getElementById("distances-inputs-" + planId);
+  inputDiv.addEventListener("input", () => {
+    localiserPoint(planId, inputDiv.id);
   });
 }
 
@@ -37,7 +61,7 @@ function ajouterPoint(planId, x, y) {
   point.dataset.id = id;
   plan.appendChild(point);
 
-  const pointData = { id, x: x - 8, y: y - 8, point, planId: planId === "plan1" ? 1 : 2, distance: null };
+  const pointData = { id, x: x - 8, y: y - 8, point, planId: 1, distance: null };
   points.push(pointData);
 
   makeDraggable(point, pointData);
@@ -49,9 +73,7 @@ function makeDraggable(point, pointData) {
     e.dataTransfer.setData("text/plain", pointData.id);
   });
 
-  point.addEventListener("dragend", () => {
-    // Aucun changement de style n'est nécessaire ici
-  });
+  point.addEventListener("dragend", () => {});
 
   const plan = point.closest(".plan");
   plan.addEventListener("dragover", e => e.preventDefault());
@@ -61,27 +83,21 @@ function makeDraggable(point, pointData) {
     const id = Number(e.dataTransfer.getData("text/plain"));
     const p = points.find(p => p.id === id);
     if (p) {
-      // Mettre à jour les coordonnées du point
       p.x = e.clientX - rect.left - 10;
       p.y = e.clientY - rect.top - 10;
       p.point.style.left = `${p.x}px`;
       p.point.style.top = `${p.y}px`;
-
-      // Mettre à jour les coordonnées affichées et recalculer la localisation
       afficherCoordonnees();
-      const planId = p.planId === 1 ? "plan1" : "plan2";
-      localiserPoint(planId, `distances-inputs-${planId}`);
+      localiserPoint("plan1", "distances-inputs-plan1");
     }
   });
 }
 
 function afficherCoordonnees() {
   const container1 = document.getElementById("plan1-points");
-  const container2 = document.getElementById("plan2-points");
   container1.innerHTML = "";
-  container2.innerHTML = "";
 
-  points.forEach(({ id, x, y, planId }) => {
+  points.forEach(({ id, x, y }) => {
     const ligne = document.createElement("div");
     ligne.className = "coordonnees-ligne";
 
@@ -92,7 +108,7 @@ function afficherCoordonnees() {
       <button data-id="${id}">❌</button>
     `;
 
-    (planId === 1 ? container1 : container2).appendChild(ligne);
+    container1.appendChild(ligne);
   });
 
   document.querySelectorAll("input").forEach(input => {
@@ -104,10 +120,7 @@ function afficherCoordonnees() {
       if (p) {
         p[coord] = val;
         p.point.style[coord === "x" ? "left" : "top"] = `${val}px`;
-
-        // Mettre à jour la localisation du point rouge
-        const planId = p.planId === 1 ? "plan1" : "plan2";
-        localiserPoint(planId, `distances-inputs-${planId}`);
+        localiserPoint("plan1", "distances-inputs-plan1");
       }
     });
   });
@@ -125,24 +138,20 @@ function supprimerPoint(id) {
     points[index].point.remove();
     points.splice(index, 1);
     afficherCoordonnees();
-    updateTriangulationForm(); // Met à jour les distances affichées
+    updateTriangulationForm();
   }
 }
 
 function updateTriangulationForm() {
-  ["plan1", "plan2"].forEach(planId => {
-    const inputDiv = document.getElementById("distances-inputs-" + planId);
-    inputDiv.innerHTML = "";
-    points
-      .filter(p => p.planId === (planId === "plan1" ? 1 : 2))
-      .forEach(p => {
-        const div = document.createElement("div");
-        div.innerHTML = `Point ${p.id} distance : <input type="number" step="1" data-id="${p.id}" value="${p.distance || ''}">`;
-        inputDiv.appendChild(div);
-      });
+  const inputDiv = document.getElementById("distances-inputs-plan1");
+  inputDiv.innerHTML = "";
+  points.forEach(p => {
+    const div = document.createElement("div");
+    div.innerHTML = `Point ${p.id} distance : <input type="number" step="1" data-id="${p.id}" value="${p.distance || ''}">`;
+    inputDiv.appendChild(div);
   });
 
-  document.querySelectorAll(`#distances-inputs-plan1 input, #distances-inputs-plan2 input`).forEach(input => {
+  document.querySelectorAll(`#distances-inputs-plan1 input`).forEach(input => {
     input.addEventListener("input", () => {
       const id = Number(input.dataset.id);
       const radius = Number(input.value);
@@ -163,8 +172,8 @@ function updateTriangulationForm() {
           circle.classList.add("circle");
           circle.style.width = `${point.distance * 2}px`;
           circle.style.height = `${point.distance * 2}px`;
-          circle.style.left = "50%"; // Centrer horizontalement
-          circle.style.top = "50%";  // Centrer verticalement
+          circle.style.left = "50%";
+          circle.style.top = "50%";
           point.point.appendChild(circle);
         }
       }
@@ -173,7 +182,7 @@ function updateTriangulationForm() {
 }
 
 function localiserPoint(planId, inputDivId) {
-  const knownPoints = points.filter(p => p.planId === (planId === "plan1" ? 1 : 2) && p.distance);
+  const knownPoints = points.filter(p => p.distance);
 
   if (knownPoints.length < 3) {
     const existingRedPoint = document.querySelector(`#${planId} .point.red`);
