@@ -28,6 +28,20 @@ function init() {
     };
     reader.readAsDataURL(file);
   });
+
+  // Ajout gestion du bouton "Supprimer tous les points"
+  const deleteAllBtn = document.getElementById("delete-all-points");
+  if (deleteAllBtn) {
+    deleteAllBtn.addEventListener("click", () => {
+      points.forEach(p => p.point.remove());
+      points.length = 0;
+      afficherCoordonnees();
+      updateTriangulationForm();
+      // Supprimer le point rouge de localisation s'il existe
+      const redPoint = document.querySelector("#plan1 .point.red");
+      if (redPoint) redPoint.remove();
+    });
+  }
 }
 
 function initPlan(planId) {
@@ -184,11 +198,14 @@ function updateTriangulationForm() {
 function localiserPoint(planId, inputDivId) {
   const knownPoints = points.filter(p => p.distance);
 
+  const localisationDiv = document.getElementById("localisation-coordonnees");
+
   if (knownPoints.length < 3) {
     const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
+    if (localisationDiv) localisationDiv.textContent = "Aucune localisation possible (au moins 3 distances nécessaires)";
     return;
   }
 
@@ -214,11 +231,15 @@ function localiserPoint(planId, inputDivId) {
     point.style.left = `${pos.x}px`;
     point.style.top = `${pos.y}px`;
     plan.appendChild(point);
+
+    // Affiche les coordonnées dans la partie coordonnées
+    if (localisationDiv) localisationDiv.textContent = `Point localisé : X = ${Math.round(pos.x)}, Y = ${Math.round(pos.y)}`;
   } catch (error) {
     const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {
       existingRedPoint.remove();
     }
+    if (localisationDiv) localisationDiv.textContent = "Localisation impossible (points colinéaires ou mal positionnés)";
   }
 }
 
