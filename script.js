@@ -19,13 +19,7 @@ function init() {
       const plansContainer = document.getElementById("plans-container");
       plansContainer.innerHTML = "";
 
-      // Réinitialise les points et la localisation
-      points.forEach(p => p.point.remove());
-      points.length = 0;
-      afficherCoordonnees();
-      updateTriangulationForm();
-      const redPoint = document.querySelector("#plan1 .point.red");
-      if (redPoint) redPoint.remove();
+      resetPointsAndLocalisation();
 
       // Affiche le plan sélectionné
       const planDiv = document.createElement("div");
@@ -67,16 +61,7 @@ function init() {
   // Gestion du bouton "Supprimer tous les points"
   const deleteAllBtn = document.getElementById("delete-all-points");
   if (deleteAllBtn) {
-    deleteAllBtn.addEventListener("click", () => {
-      points.forEach(p => p.point.remove());
-      points.length = 0;
-      afficherCoordonnees();
-      updateTriangulationForm();
-      const redPoint = document.querySelector("#plan1 .point.red");
-      if (redPoint) redPoint.remove();
-      const localisationDiv = document.getElementById("localisation-coordonnees");
-      if (localisationDiv) localisationDiv.textContent = "";
-    });
+    deleteAllBtn.addEventListener("click", resetPointsAndLocalisation);
   }
 }
 
@@ -281,7 +266,7 @@ function localiserPoint(planId, inputDivId) {
     if (localisationDiv) {
       localisationDiv.innerHTML = `
         <div class="coordonnees-ligne">
-          <label>Point localisé :</label><br>
+          <label>📍Point localisé :</label><br>
           <label>
             X <input type="number" value="${(pos.x/pxPerMeter).toFixed(2)}" disabled
               style="background:#B9DEE2; color:#000; border:2px solid #000; width:90px;">
@@ -329,6 +314,17 @@ function estimerPosition(knownPoints, distances) {
   const y = (A * F - C * D) / denominator;
 
   return { x, y };
+}
+
+function resetPointsAndLocalisation() {
+  points.forEach(p => p.point.remove());
+  points.length = 0;
+  afficherCoordonnees();
+  updateTriangulationForm();
+  const redPoint = document.querySelector("#plan1 .point.red");
+  if (redPoint) redPoint.remove();
+  const localisationDiv = document.getElementById("localisation-coordonnees");
+  if (localisationDiv) localisationDiv.textContent = "";
 }
 
 window.addEventListener("DOMContentLoaded", init);
