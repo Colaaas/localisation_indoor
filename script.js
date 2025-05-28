@@ -50,10 +50,10 @@ function init() {
         <svg width="110" height="110">
           <line x1="16" y1="16" x2="100" y2="16" stroke="black" stroke-width="2"/>
           <line x1="16" y1="16" x2="16" y2="100" stroke="black" stroke-width="2"/>
-          <text x="95" y="32" font-size="14" fill="red">X</text>
-          <text x="22" y="105" font-size="14" fill="red">Y</text>
+          <text x="100" y="10" font-size="14" fill="red">X</text>
+          <text x="0" y="100" font-size="14" fill="red">Y</text>
           <circle cx="16" cy="16" r="6" fill="red"/>
-          <text x="2" y="30" font-size="13" fill="red">0,0</text>
+          <text x="20" y="30" font-size="13" fill="red">0,0</text>
         </svg>
       `;
       planDiv.appendChild(axes);
