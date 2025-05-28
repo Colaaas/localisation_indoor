@@ -1,35 +1,70 @@
 let idCounter = 1;
 const points = [];
 
-function init() {
-  document.getElementById("plan-upload").addEventListener("change", function (e) {
-    const file = e.target.files[0];
-    document.getElementById("plan-filename").textContent = file ? file.name : "";
-    if (!file) return;
+const pxPerMeterByPlan = {
+  "ENSIM_0": 525 / 102,           // ≈ 5.15 px/m
+  "ENSIM_1": 525 / 102,           // ≈ 5.15 px/m
+  "Faculté-DEG": 235 / 52,        // ≈ 4.52 px/m
+  "Faculté-LLSH": 242 / 49,       // ≈ 4.94 px/m
+  "Faculté-ST": 86 / 43,          // ≈ 2.00 px/m
+  "IUT": 106 / 63.5               // ≈ 1.67 px/m
+};
 
-    const reader = new FileReader();
-    reader.onload = function (evt) {
+function init() {
+  // Gestion des icônes de plans
+  document.querySelectorAll('.plan-icon').forEach(icon => {
+    icon.addEventListener('click', function () {
+      const planName = this.dataset.plan;
+      window.pxPerMeter = pxPerMeterByPlan[planName] || 1;
       const plansContainer = document.getElementById("plans-container");
       plansContainer.innerHTML = "";
 
+      // Réinitialise les points et la localisation
+      points.forEach(p => p.point.remove());
+      points.length = 0;
+      afficherCoordonnees();
+      updateTriangulationForm();
+      const redPoint = document.querySelector("#plan1 .point.red");
+      if (redPoint) redPoint.remove();
+
+      // Affiche le plan sélectionné
       const planDiv = document.createElement("div");
       planDiv.className = "plan";
       planDiv.id = "plan1";
 
       const img = document.createElement("img");
-      img.src = evt.target.result;
+      img.src = `plans/${planName}.jpg`;
       img.style.width = "100%";
       img.style.height = "auto";
       planDiv.appendChild(img);
 
+      // Ajoute ce code après avoir ajouté l'image dans planDiv
+      const axes = document.createElement("div");
+      axes.style.position = "absolute";
+      axes.style.left = "-15px";
+      axes.style.top = "-15px";
+      axes.style.width = "110px";
+      axes.style.height = "110px";
+      axes.style.pointerEvents = "none";
+      axes.innerHTML = `
+        <svg width="110" height="110">
+          <line x1="16" y1="16" x2="100" y2="16" stroke="black" stroke-width="2"/>
+          <line x1="16" y1="16" x2="16" y2="100" stroke="black" stroke-width="2"/>
+          <text x="95" y="32" font-size="14" fill="red">X</text>
+          <text x="22" y="105" font-size="14" fill="red">Y</text>
+          <circle cx="16" cy="16" r="6" fill="red"/>
+          <text x="2" y="30" font-size="13" fill="red">0,0</text>
+        </svg>
+      `;
+      planDiv.appendChild(axes);
+
       plansContainer.appendChild(planDiv);
 
       initPlan("plan1");
-    };
-    reader.readAsDataURL(file);
+    });
   });
 
-  // Ajout gestion du bouton "Supprimer tous les points"
+  // Gestion du bouton "Supprimer tous les points"
   const deleteAllBtn = document.getElementById("delete-all-points");
   if (deleteAllBtn) {
     deleteAllBtn.addEventListener("click", () => {
@@ -37,9 +72,10 @@ function init() {
       points.length = 0;
       afficherCoordonnees();
       updateTriangulationForm();
-      // Supprimer le point rouge de localisation s'il existe
       const redPoint = document.querySelector("#plan1 .point.red");
       if (redPoint) redPoint.remove();
+      const localisationDiv = document.getElementById("localisation-coordonnees");
+      if (localisationDiv) localisationDiv.textContent = "";
     });
   }
 }
@@ -67,15 +103,15 @@ function ajouterPoint(planId, x, y) {
   const point = document.createElement("div");
   point.classList.add("point");
   point.textContent = idCounter;
-  point.style.left = `${x - 8}px`;
-  point.style.top = `${y - 8}px`;
+  point.style.left = `${x - 15}px`;
+  point.style.top = `${y - 15}px`;
   point.draggable = true;
 
   const id = idCounter++;
   point.dataset.id = id;
   plan.appendChild(point);
 
-  const pointData = { id, x: x - 8, y: y - 8, point, planId: 1, distance: null };
+  const pointData = { id, x: x - 15, y: y - 15, point, planId: 1, distance: null };
   points.push(pointData);
 
   makeDraggable(point, pointData);
@@ -111,14 +147,16 @@ function afficherCoordonnees() {
   const container1 = document.getElementById("plan1-points");
   container1.innerHTML = "";
 
+  const pxPerMeter = window.pxPerMeter || 1;
+
   points.forEach(({ id, x, y }) => {
     const ligne = document.createElement("div");
     ligne.className = "coordonnees-ligne";
 
     ligne.innerHTML = `
       <label>Point ${id}</label><br>
-      <label>X <input type="number" value="${Math.round(x)}" data-id="${id}" data-coord="x"></label><br>
-      <label>Y <input type="number" value="${Math.round(y)}" data-id="${id}" data-coord="y"></label><br>
+      <label>X <input type="number" step="0.5" value="${(x/pxPerMeter).toFixed(2)}" data-id="${id}" data-coord="x"></label> m<br>
+      <label>Y <input type="number" step="0.5" value="${(y/pxPerMeter).toFixed(2)}" data-id="${id}" data-coord="y"></label> m<br>
       <button data-id="${id}">❌</button>
     `;
 
@@ -131,9 +169,10 @@ function afficherCoordonnees() {
       const coord = input.dataset.coord;
       const val = Number(input.value);
       const p = points.find(p => p.id === id);
+      const pxPerMeter = window.pxPerMeter || 1;
       if (p) {
-        p[coord] = val;
-        p.point.style[coord === "x" ? "left" : "top"] = `${val}px`;
+        p[coord] = val * pxPerMeter; // Conversion m → px
+        p.point.style[coord === "x" ? "left" : "top"] = `${p[coord]}px`;
         localiserPoint("plan1", "distances-inputs-plan1");
       }
     });
@@ -159,20 +198,26 @@ function supprimerPoint(id) {
 function updateTriangulationForm() {
   const inputDiv = document.getElementById("distances-inputs-plan1");
   inputDiv.innerHTML = "";
+  const pxPerMeter = window.pxPerMeter || 1;
   points.forEach(p => {
+    const val = p.distance ? (p.distance / pxPerMeter).toFixed(2) : '';
     const div = document.createElement("div");
-    div.innerHTML = `Point ${p.id} distance : <input type="number" step="1" data-id="${p.id}" value="${p.distance || ''}">`;
+    div.innerHTML = `Point ${p.id} distance : <input type="number" step="0.5" data-id="${p.id}" value="${val}"> m`;
     inputDiv.appendChild(div);
   });
+
+  const refDiv = document.getElementById("reference-distance");
+  if (refDiv) refDiv.innerHTML = "";
 
   document.querySelectorAll(`#distances-inputs-plan1 input`).forEach(input => {
     input.addEventListener("input", () => {
       const id = Number(input.dataset.id);
       const radius = Number(input.value);
       const point = points.find(p => p.id === id);
+      const pxPerMeter = window.pxPerMeter || 1;
 
       if (point) {
-        point.distance = isNaN(radius) || radius <= 0 ? null : radius;
+        point.distance = isNaN(radius) || radius <= 0 ? null : radius * pxPerMeter; // Conversion m → px
 
         // Supprimer l'ancien cercle s'il existe
         const existingCircle = point.point.querySelector(".circle");
@@ -233,7 +278,7 @@ function localiserPoint(planId, inputDivId) {
     plan.appendChild(point);
 
     // Affiche les coordonnées dans la partie coordonnées
-    if (localisationDiv) localisationDiv.textContent = `Point localisé : X = ${Math.round(pos.x)}, Y = ${Math.round(pos.y)}`;
+    if (localisationDiv) localisationDiv.innerHTML = `Point localisé : <br>X = ${(pos.x/pxPerMeter).toFixed(2)} m<br>Y = ${(pos.y/pxPerMeter).toFixed(2)} m`;
   } catch (error) {
     const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {

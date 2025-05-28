@@ -9,9 +9,13 @@
 <body>
   <div id="container">
     <div class="main-content">
-      <div id="plan-loader">
-        <input type="file" id="plan-upload" accept="image/*">
-        <span id="plan-filename"></span>
+      <div id="plan-icons" style="display: flex; gap: 16px; margin-bottom: 16px;">
+        <img src="plans/ENSIM_0.jpg" alt="ENSIM_0" class="plan-icon" data-plan="ENSIM_0">
+        <img src="plans/ENSIM_1.jpg" alt="ENSIM_1" class="plan-icon" data-plan="ENSIM_1">
+        <img src="plans/Faculté-DEG.jpg" alt="Faculté-DEG" class="plan-icon" data-plan="Faculté-DEG">
+        <img src="plans/Faculté-LLSH.jpg" alt="Faculté-LLSH" class="plan-icon" data-plan="Faculté-LLSH">
+        <img src="plans/Faculté-ST.jpg" alt="Faculté-ST" class="plan-icon" data-plan="Faculté-ST">
+        <img src="plans/IUT.jpg" alt="IUT" class="plan-icon" data-plan="IUT">
       </div>
       <div id="plans-container"></div>
     </div>
@@ -19,7 +23,7 @@
       <button id="delete-all-points" style="margin-bottom:10px;">🗑️ Supprimer tous les points</button>
       <div id="plan1-points"></div>
       <div id="distances-inputs-plan1"></div>
-      <div id="localisation-coordonnees" style="margin-top:20px;"></div>      
+      <div id="localisation-coordonnees" style="margin-top:20px;"></div> 
     </div>
   </div>
   <script src="script.js"></script>
