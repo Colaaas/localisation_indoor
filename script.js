@@ -48,8 +48,8 @@ function init() {
       axes.style.pointerEvents = "none";
       axes.innerHTML = `
         <svg width="110" height="110">
-          <line x1="16" y1="16" x2="100" y2="16" stroke="black" stroke-width="2"/>
-          <line x1="16" y1="16" x2="16" y2="100" stroke="black" stroke-width="2"/>
+          <line x1="16" y1="16" x2="100" y2="16" stroke="red" stroke-width="2"/>
+          <line x1="16" y1="16" x2="16" y2="100" stroke="red" stroke-width="2"/>
           <text x="100" y="10" font-size="14" fill="red">X</text>
           <text x="0" y="100" font-size="14" fill="red">Y</text>
           <circle cx="16" cy="16" r="6" fill="red"/>
@@ -278,7 +278,21 @@ function localiserPoint(planId, inputDivId) {
     plan.appendChild(point);
 
     // Affiche les coordonnées dans la partie coordonnées
-    if (localisationDiv) localisationDiv.innerHTML = `Point localisé : <br>X = ${(pos.x/pxPerMeter).toFixed(2)} m<br>Y = ${(pos.y/pxPerMeter).toFixed(2)} m`;
+    if (localisationDiv) {
+      localisationDiv.innerHTML = `
+        <div class="coordonnees-ligne">
+          <label>Point localisé :</label><br>
+          <label>
+            X <input type="number" value="${(pos.x/pxPerMeter).toFixed(2)}" disabled
+              style="background:#B9DEE2; color:#000; border:2px solid #000; width:90px;">
+          </label> m<br>
+          <label>
+            Y <input type="number" value="${(pos.y/pxPerMeter).toFixed(2)}" disabled
+              style="background:#B9DEE2; color:#000; border:2px solid #000; width:90px;">
+          </label> m
+        </div>
+      `;
+    }
   } catch (error) {
     const existingRedPoint = document.querySelector(`#${planId} .point.red`);
     if (existingRedPoint) {

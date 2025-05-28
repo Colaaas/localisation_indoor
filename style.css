@@ -4,6 +4,7 @@ body {
     display: flex;
     flex-direction: row;
     height: 100vh;
+    background: #282F63;
   }
   
   #container {
@@ -61,10 +62,10 @@ body {
 
   .circle {
     position: absolute;
-    border: 2px dashed rgba(0, 0, 255, 0.5); /* Cercle bleu avec bordure en pointillés */
+    border: 2px dashed rgb(145, 145, 0);
     border-radius: 50%;
-    pointer-events: none; /* Empêche les interactions avec le cercle */
-    transform: translate(-50%, -50%); /* Centrer le cercle */
+    pointer-events: none;
+    transform: translate(-50%, -50%);
   }
   
   #coordonnees {
@@ -74,6 +75,7 @@ body {
     overflow-y: auto;
     height: 100vh;
     box-sizing: border-box;
+    background: #759EB9;
   }
   
   .coordonnees-ligne {
@@ -89,6 +91,7 @@ body {
     display: inline-block;
     width: 90px;
     font-size: 16px;
+    background: #B9DEE2;
   }
 
   #plans-container {
@@ -110,13 +113,19 @@ body {
 
 
 .plan-icon {
-  width: 80px;
-  height: 80px;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  max-width: 160px;
+  max-height: 160px;
   object-fit: contain;
   border: 2px solid #ccc;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 10px;
+  padding: 4px;
+  background: #fff;
+  box-sizing: content-box;
   transition: border 0.2s;
+  vertical-align: middle;
 }
 .plan-icon:hover {
   border: 2px solid #0078d7;
@@ -125,4 +134,20 @@ body {
 #distances-inputs-plan1 input[type="number"] {
   width: 90px;
   font-size: 16px;
+  background: #B9DEE2;
 }
+
+#coordonnees button {
+  background: #B9DEE2;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#coordonnees button:hover {
+  background: #8fcfe0;
+}
+
